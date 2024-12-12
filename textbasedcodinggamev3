@@ -1,0 +1,167 @@
+import java.util.Scanner;
+import java.util.Random;
+
+public class TextBasedGame {
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        Random random = new Random();
+
+        int playerHP = 100; // Player starts with 100 HP
+        int baseDamageMin = 5; // Player's base damage minimum
+        int baseDamageMax = 20; // Player's base damage maximum
+        boolean isPlaying = true;
+
+        System.out.println("Welcome to the Text-Based Game!");
+        System.out.println("You are exploring a dark forest. Beware of what lies ahead!");
+
+        while (isPlaying && playerHP > 0) {
+            System.out.println("\nYou walk deeper into the forest...");
+            int encounter = random.nextInt(4); // 4 possible random encounters
+
+            if (encounter == 0) {
+                System.out.println("You find a peaceful clearing. You rest and feel at ease.");
+            } else if (encounter == 1) {
+                System.out.println("You stumble upon a treasure chest! But it's locked...");
+            } else if (encounter == 2) {
+                System.out.println("You hear a strange noise but nothing appears. Spooky!");
+            } else if (encounter == 3) {
+                System.out.println("A wild enemy appears!");
+
+                // Random enemy: 0 = Skeleton, 1 = Zombie
+                String enemyType = random.nextInt(2) == 0 ? "Skeleton" : "Zombie";
+                int enemyHP = enemyType.equals("Skeleton") ? 10 : 20;
+                int enemyDamageMin = enemyType.equals("Skeleton") ? 3 : 5;
+                int enemyDamageMax = enemyType.equals("Skeleton") ? 5 : 10;
+
+                System.out.println("You encounter a " + enemyType + " with " + enemyHP + " HP!");
+                boolean inCombat = true;
+
+                while (inCombat && playerHP > 0 && enemyHP > 0) {
+                    System.out.print("\nDo you want to 'fight' or 'run'? ");
+                    String action = scanner.next().toLowerCase();
+
+                    if (action.equals("run")) {
+                        System.out.println("You run away, but lose 10 HP in the process!");
+                        playerHP -= 10;
+                        inCombat = false; // Exit combat loop
+                    } else if (action.equals("fight")) {
+                        boolean playerTurn = random.nextBoolean(); // Randomize who goes first
+                        System.out.println((playerTurn ? "You" : "The " + enemyType) + " attack first!");
+
+                        String combatChoice = ""; // Define combat choice variable
+                        while (playerHP > 0 && enemyHP > 0) {
+                            if (playerTurn) {
+                                // Player's turn
+                                System.out.print("\nChoose an action: 'attack' or 'block': ");
+                                combatChoice = scanner.next().toLowerCase();
+
+                                if (combatChoice.equals("attack")) {
+                                    // Player attacks
+                                    int damage = random.nextInt(baseDamageMax - baseDamageMin + 1) + baseDamageMin;
+                                    System.out.println("You attack and deal " + damage + " damage!");
+                                    enemyHP -= damage;
+                                    if (enemyHP <= 0) {
+                                        System.out.println("You have defeated the " + enemyType + "!");
+                                        break;
+                                    }
+                                } else if (combatChoice.equals("block")) {
+                                    System.out.println("You prepare to block the enemy's attack.");
+                                } else {
+                                    System.out.println("Invalid action. You lose your turn!");
+                                }
+                            } else {
+                                // Enemy's turn
+                                int damage = random.nextInt(enemyDamageMax - enemyDamageMin + 1) + enemyDamageMin;
+                                if (combatChoice.equals("block")) {
+                                    // Player blocked, reduce damage
+                                    damage = damage / 4; // 75% reduction
+                                    System.out.println("The " + enemyType + " attacks, but you block! You only take " + damage + " damage.");
+                                } else {
+                                    System.out.println("The " + enemyType + " attacks and deals " + damage + " damage!");
+                                }
+                                playerHP -= damage;
+                                if (playerHP <= 0) {
+                                    System.out.println("The " + enemyType + " has defeated you...");
+                                    break;
+                                }
+                            }
+                            playerTurn = !playerTurn; // Switch turns
+                        }
+
+                        if (enemyHP <= 0) {
+                            // Reward player after defeating enemy
+                            int heal = random.nextInt(11) + 10; // Heal 10-20 HP
+                            playerHP += heal;
+                            System.out.println("You gain " + heal + " HP after the battle. Your current HP: " + playerHP);
+
+                            // Loot System: Assign a weapon with rarity
+                            String weaponRarity = determineWeaponRarity(random);
+                            System.out.println("You found a Great Sword (" + weaponRarity + ")!");
+
+                            // Adjust player damage based on rarity
+                            int rarityBoost = getRarityBoost(weaponRarity);
+                            baseDamageMin += rarityBoost;
+                            baseDamageMax += rarityBoost;
+                            System.out.println("Your new damage range is: " + baseDamageMin + "-" + baseDamageMax);
+                        }
+                        inCombat = false; // Exit combat after a fight
+                    } else {
+                        System.out.println("Invalid action. The enemy attacks you!");
+                        int damage = random.nextInt(enemyDamageMax - enemyDamageMin + 1) + enemyDamageMin;
+                        playerHP -= damage;
+                        System.out.println("You take " + damage + " damage. Current HP: " + playerHP);
+                    }
+                }
+            }
+
+            // Check if the player wants to continue
+            if (playerHP > 0) {
+                System.out.print("\nDo you want to continue exploring? (yes/no): ");
+                String continuePlaying = scanner.next().toLowerCase();
+                if (!continuePlaying.equals("yes")) {
+                    isPlaying = false;
+                    System.out.println("Thanks for playing! Your final HP: " + playerHP);
+                }
+            }
+        }
+
+        if (playerHP <= 0) {
+            System.out.println("\nGame Over! You have no HP left.");
+        }
+
+        scanner.close();
+    }
+
+    // Determine weapon rarity based on probability
+    private static String determineWeaponRarity(Random random) {
+        int chance = random.nextInt(100) + 1; // Random number between 1 and 100
+        if (chance <= 50) {
+            return "Common";
+        } else if (chance <= 75) {
+            return "Rare";
+        } else if (chance <= 90) {
+            return "Epic";
+        } else if (chance <= 99) {
+            return "Legendary";
+        } else {
+            return "Mythic";
+        }
+    }
+
+    // Get rarity boost to player's damage based on rarity
+    private static int getRarityBoost(String rarity) {
+        switch (rarity) {
+            case "Rare":
+                return 1;
+            case "Epic":
+                return 2;
+            case "Legendary":
+                return 3;
+            case "Mythic":
+                return 4;
+            default: // Common
+                return 0;
+        }
+    }
+}
